@@ -244,7 +244,7 @@ class NoteTakingApp(QMainWindow):
             self.sidebar.takeItem(self.sidebar.currentRow())
 
     def load_notes(self):
-        conn = sqlite3.connect('note taking app/notes.db')
+        conn = sqlite3.connect('notes.db')
         cursor = conn.cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS notes
                         (name TEXT, content TEXT)''')
@@ -258,7 +258,7 @@ class NoteTakingApp(QMainWindow):
             self.sidebar.addItem(name)
 
     def save_notes(self):
-        conn = sqlite3.connect('note taking app/notes.db')
+        conn = sqlite3.connect('notes.db')
         cursor = conn.cursor()
         cursor.execute("DELETE FROM notes")
         for name, content in self.notes.items():
