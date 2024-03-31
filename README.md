@@ -37,6 +37,12 @@ The application maintains a clipboard for storing copied or cut notes.
 ## Error Handling
 Error handling is implemented for file operations and database interactions, displaying error messages when necessary.
 
+## Things to Improve
+- can add a redo action option to the edit menu
+- can allow users to change the style of the text in the current notes
+- display the option of the menu bar in a ribbon
+- have a drawing board for free drawing
+- allow more freedom for the user
 ## File Import and Export
 - Users can import notes from text files and export notes as text files.
 - Importing a text file adds its content as a new note, while exporting a note saves its content to a text file.
