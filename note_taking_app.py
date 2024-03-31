@@ -1,6 +1,5 @@
 import sys
 import sqlite3
-from PyQt6 import QtGui
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QListWidget, QPushButton, QLineEdit, QTextEdit, QMenu, QDialog, QAbstractItemView, QListWidgetItem, QFileDialog, QMessageBox, QSplitter
 from PyQt6.QtCore import Qt
@@ -180,6 +179,7 @@ class NoteTakingApp(QMainWindow):
         self.cut_action = QAction("Cut", self)
         self.cut_action.triggered.connect(self.cut_note)
         self.cut_action.setShortcut("Ctrl+X")
+        self.open_action.setShortcutVisibleInContextMenu(True)
 
         # Add actions to the sidebar menu
         self.add_menu_actions()
@@ -244,7 +244,7 @@ class NoteTakingApp(QMainWindow):
             self.sidebar.takeItem(self.sidebar.currentRow())
 
     def load_notes(self):
-        conn = sqlite3.connect('notes.db')
+        conn = sqlite3.connect('note taking app/notes.db')
         cursor = conn.cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS notes
                         (name TEXT, content TEXT)''')
@@ -258,7 +258,7 @@ class NoteTakingApp(QMainWindow):
             self.sidebar.addItem(name)
 
     def save_notes(self):
-        conn = sqlite3.connect('notes.db')
+        conn = sqlite3.connect('note taking app/notes.db')
         cursor = conn.cursor()
         cursor.execute("DELETE FROM notes")
         for name, content in self.notes.items():
@@ -276,26 +276,6 @@ class NoteTakingApp(QMainWindow):
                     file.write(content)
                 QMessageBox.information(self, "Note Saved", "The note has been successfully saved as a text file.")
 
-    def highlight_text(self):
-        cursor = self.content_input.textCursor()
-        cursor.mergeCharFormat(QtGui.QTextCharFormat())
-        format = QtGui.QTextCharFormat()
-        format.setBackground(QtGui.QColor("yellow"))
-        cursor.setCharFormat(format)
-
-    def underline_text(self):
-        cursor = self.content_input.textCursor()
-        cursor.mergeCharFormat(QtGui.QTextCharFormat())
-        format = QtGui.QTextCharFormat()
-        format.setFontUnderline(True)
-        cursor.setCharFormat(format)
-
-    def italic_text(self):
-        cursor = self.content_input.textCursor()
-        cursor.mergeCharFormat(QtGui.QTextCharFormat())
-        format = QtGui.QTextCharFormat()
-        format.setFontItalic(True)
-        cursor.setCharFormat(format)
 
     def add_menu_actions(self):
         # Add copy, paste, and cut actions
@@ -308,25 +288,38 @@ class NoteTakingApp(QMainWindow):
 
     def show_sidebar_menu(self, pos):
         menu = QMenu()
-        
-        new_action = menu.addAction("New")
+
+        new_action = QAction("New", self)
+        new_action.setShortcut("Ctrl+N")
         new_action.triggered.connect(self.add_note)
+        menu.addAction(new_action)
 
-        edit_action = menu.addAction("Edit")
+        edit_action = QAction("Edit", self)
+        edit_action.setShortcut("Ctrl+E")
         edit_action.triggered.connect(self.edit_note)
+        menu.addAction(edit_action)
 
-        delete_action = menu.addAction("Delete")
+        delete_action = QAction("Delete", self)
+        delete_action.setShortcut("DELETE")
         delete_action.triggered.connect(self.delete_note)
+        menu.addAction(delete_action)
 
-        # Add copy, paste, and cut actions
-        copy_action = menu.addAction("Copy")
+        menu.addSeparator()
+
+        copy_action = QAction("Copy", self)
+        copy_action.setShortcut("Ctrl+C")
         copy_action.triggered.connect(self.copy_note)
+        menu.addAction(copy_action)
 
-        paste_action = menu.addAction("Paste")
+        paste_action = QAction("Paste", self)
+        paste_action.setShortcut("Ctrl+V")
         paste_action.triggered.connect(self.paste_note)
+        menu.addAction(paste_action)
 
-        cut_action = menu.addAction("Cut")
+        cut_action = QAction("Cut", self)
+        cut_action.setShortcut("Ctrl+X")
         cut_action.triggered.connect(self.cut_note)
+        menu.addAction(cut_action)
 
         menu.exec(self.sidebar.mapToGlobal(pos))
 
