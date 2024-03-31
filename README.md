@@ -12,7 +12,7 @@ This Python code defines a simple note-taking application using PyQt6 for the GU
 ## Menu Bar
 - The application has a menu bar with three menus: File, Edit, and View.
 - The File menu contains options for creating new notes, opening existing notes, saving notes, and exiting the application.
-- The Edit menu contains options for undoing and redoing actions.
+- The Edit menu contains options for undoing actions.
 - The View menu contains options for showing or hiding the sidebar.
 
 ## Sidebar
