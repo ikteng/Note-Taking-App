@@ -2,6 +2,8 @@
 
 This Python code defines a simple note-taking application using PyQt6 for the GUI and SQLite for database storage.
 
+![application image](https://github.com/ikteng/Note-Taking-App/blob/f3e7c7a221635b11335dba316c528aa576fe87bd/app_image.png)
+
 ## GUI Layout
 - The application window consists of a main layout divided into 2 sections: a sidebar on the left and a note input area on the right. These sections are managed using a QSplitter to allow resizing.
 - The sidebar contains a list of notes and a button to create a new note.
