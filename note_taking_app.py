@@ -63,12 +63,6 @@ class NoteTakingApp(QMainWindow):
         self.undo_action.setShortcut("Ctrl+Z")
         self.edit_menu.addAction(self.undo_action)
 
-        # Add redo action
-        self.redo_action = QAction("&Redo", self)
-        self.redo_action.triggered.connect(self.redo)
-        self.redo_action.setShortcut("Ctrl+Y")
-        self.edit_menu.addAction(self.redo_action)
-
         # View Menu
         self.view_menu = self.menu_bar.addMenu("&View")
 
@@ -202,6 +196,8 @@ class NoteTakingApp(QMainWindow):
             name = current_item.text()
             content = self.content_input.toPlainText()
             self.notes[name] = content  # Update dictionary
+            old_content = content
+            self.undo_stack.append(('edit', name, old_content))
     
     def add_note(self):
         if not self.sidebar_enabled:
@@ -222,6 +218,8 @@ class NoteTakingApp(QMainWindow):
             self.content_input.setVisible(False)
             self.sidebar_enabled = False  # Reset sidebar flag
 
+            self.undo_stack.append(('add', name, content))
+
     def edit_note(self):
         item = self.sidebar.currentItem()
         if item:
@@ -240,11 +238,12 @@ class NoteTakingApp(QMainWindow):
         if item:
             name = item.text()
             if name in self.notes:  # Check if the note exists in the dictionary
-                del self.notes[name]  # Remove note from the dictionary
-            self.sidebar.takeItem(self.sidebar.currentRow())
+                content = self.notes.pop(name)  # Remove note from the dictionary and get its content
+                self.sidebar.takeItem(self.sidebar.currentRow())
+                self.undo_stack.append(('delete', name, content))
 
     def load_notes(self):
-        conn = sqlite3.connect('notes.db')
+        conn = sqlite3.connect('note taking app/notes.db')
         cursor = conn.cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS notes
                         (name TEXT, content TEXT)''')
@@ -258,7 +257,7 @@ class NoteTakingApp(QMainWindow):
             self.sidebar.addItem(name)
 
     def save_notes(self):
-        conn = sqlite3.connect('notes.db')
+        conn = sqlite3.connect('note taking app/notes.db')
         cursor = conn.cursor()
         cursor.execute("DELETE FROM notes")
         for name, content in self.notes.items():
@@ -275,7 +274,6 @@ class NoteTakingApp(QMainWindow):
                 with open(file_path, 'w') as file:
                     file.write(content)
                 QMessageBox.information(self, "Note Saved", "The note has been successfully saved as a text file.")
-
 
     def add_menu_actions(self):
         # Add copy, paste, and cut actions
@@ -329,6 +327,8 @@ class NoteTakingApp(QMainWindow):
             name = item.text()
             content = self.notes.get(name, "")
             self.clipboard = (name, content)
+            # Add copy operation to the undo stack
+            self.undo_stack.append(('copy', name, content))
 
     def paste_note(self):
         if hasattr(self, 'clipboard'):
@@ -339,6 +339,7 @@ class NoteTakingApp(QMainWindow):
                 unique_name = self.generate_unique_name(copied_note_name)
             self.sidebar.addItem(unique_name)
             self.notes[unique_name] = copied_note_content  # Add the copied note to the notes dictionary with an empty content
+            self.undo_stack.append(('paste', unique_name))
     
     def generate_unique_name(self, name):
         counter = 1
@@ -355,44 +356,22 @@ class NoteTakingApp(QMainWindow):
             content = self.notes.get(name, "")
             self.clipboard = (name, content)
             self.sidebar.takeItem(self.sidebar.currentRow())
+            self.undo_stack.append(('cut', name, content))
 
     def undo(self):
         if self.undo_stack:
             action = self.undo_stack.pop()
             if action[0] == 'add':
-                name = action[1]
-                if name in self.notes:
-                    del self.notes[name]
-                    self.sidebar.takeItem(self.sidebar.count() - 1)  # Remove the last added item from the sidebar
+                name, content = action[1:]
+                del self.notes[name]  # Remove the added note
+                self.sidebar.takeItem(self.sidebar.count() - 1)  # Remove the last added item from the sidebar
             elif action[0] == 'delete':
-                name, content = action[1], action[2]
-                self.notes[name] = content
-                self.sidebar.addItem(name)
+                name, content = action[1:]
+                self.notes[name] = content  # Restore the deleted note
+                self.sidebar.addItem(name)  # Add the deleted note back to the sidebar
             elif action[0] == 'edit':
-                name, old_content = action[1], action[2]
-                self.notes[name] = old_content
-                current_item = self.sidebar.findItems(name, Qt.MatchExactly)[0]
-                current_item.setSelected(True)
-                self.edit_note()
-
-    def redo(self):
-        if self.redo_stack:
-            action = self.redo_stack.pop()
-            if action[0] == 'add':
-                name, content = action[1], action[2]
-                self.notes[name] = content
-                self.sidebar.addItem(name)
-            elif action[0] == 'delete':
-                name = action[1]
-                if name in self.notes:
-                    del self.notes[name]
-                    self.sidebar.takeItem(self.sidebar.count() - 1)  # Remove the last added item from the sidebar
-            elif action[0] == 'edit':
-                name, new_content = action[1], action[2]
-                self.notes[name] = new_content
-                current_item = self.sidebar.findItems(name, Qt.MatchExactly)[0]
-                current_item.setSelected(True)
-                self.edit_note()
+                name, old_content = action[1:]
+                self.notes[name] = old_content  # Restore the previous content
 
     def open_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Import Text File", "", "Text Files (*.txt)")
